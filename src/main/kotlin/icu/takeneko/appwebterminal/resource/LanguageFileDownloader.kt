@@ -20,7 +20,7 @@ class LanguageFileDownloader(val assetsSource: MinecraftAssetsApi) : Thread("Lan
                 }
             }.await()
             logger.info("Resolving version asset indexes.")
-            val versionAssetIndex = minecraftVersion.resolveVersionAssetIndex("1.20.1")!!.whenComplete { t, u ->
+            val versionAssetIndex = minecraftVersion.resolveVersionAssetIndex("1.21.1")!!.whenComplete { t, u ->
                 if (u != null) {
                     logger.error("Failed to resolve version assetIndex.", u)
                 }
