@@ -2,7 +2,7 @@ plugins {
     id 'idea'
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev.legacyforge' version '2.0.80'
+    id 'net.neoforged.moddev' version '1.0.11'
 
     // Adds the Kotlin Gradle plugin
     id 'org.jetbrains.kotlin.jvm' version '2.0.0'
@@ -65,17 +65,11 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 21 to end users in 1.20.1, so mods should target Java 17.
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+// Mojang ships Java 21 to end users starting with 1.21, so mods should target Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-legacyForge {
-    // Specify the version of MinecraftForge to use.
-    version = project.minecraft_version + '-' + project.forge_version
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+neoForge {
+    version = project.neo_version
 
     // This line is optional. Access Transformers are automatically detected
     //accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
@@ -85,7 +79,6 @@ legacyForge {
     runs {
         client {
             client()
-            devLogin = true
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
             jvmArgument("--add-opens=kotlinx.coroutines.core/kotlinx.coroutines.debug.internal=kotlin.stdlib")
@@ -166,10 +159,6 @@ configurations {
     shadowInclude
 }
 
-obfuscation {
-    createRemappingConfiguration(configurations.localRuntime)
-}
-
 tasks.register("deleteFrontend", Delete) {
     group = 'build'
     description = 'delete exists frontend files'
@@ -220,10 +209,6 @@ shadowJar {
     relocate "me.towdium.pinin", "icu.takeneko.appwebterminal.deps.pinin"
 }
 
-reobfJar {
-    archiveClassifier = ""
-    input = shadowJar.archiveFile
-}
 
 configurations.configureEach {
     exclude(group: "org.jetbrains.kotlinx", module: "kotlinx-serialization-json-io-jvm")
@@ -235,10 +220,10 @@ configurations.configureEach {
 }
 
 dependencies {
-    jarJar(modApi(libs.registrate.get()))
-    modImplementation(libs.bundles.jei)
-    modImplementation(libs.ae2)
-    modImplementation("curse.maven:configuration-444699:5840405")
+    jarJar(implementation(libs.registrate.get()))
+    implementation(libs.bundles.jei)
+    implementation(libs.ae2)
+    implementation("curse.maven:configuration-444699:5840405")
 
     additionalRuntimeClasspath shadowInclude(implementation("io.ktor:ktor-server-core:3.1.2"))
     additionalRuntimeClasspath shadowInclude(implementation("io.ktor:ktor-server-websockets:3.1.2"))
@@ -262,37 +247,30 @@ dependencies {
     implementation "thedarkcolour:kfflib:4.11.0"
     implementation "thedarkcolour:kffmod:4.11.0"
 
-    modImplementation("curse.maven:modern-ui-352491:6199942")
-    modImplementation("curse.maven:mekanism-268560:6258796")
-    modImplementation("curse.maven:applied-mekanistics-574300:4842281")
-    modImplementation("curse.maven:mekanism-generators-268566:6258799")
-    modImplementation("curse.maven:applied-flux-965012:6327987")
-    modImplementation("curse.maven:glodium-957920:5226922")
-    modImplementation("curse.maven:ars-energistique-905641:5504444")
-    modImplementation("curse.maven:ars-nouveau-401955:5894609")
-    modImplementation("software.bernie.geckolib:geckolib-forge-1.20.1:4.2.2")
-    modImplementation("top.theillusivec4.curios:curios-forge:5.3.1+1.20.1")
-    modImplementation("vazkii.patchouli:Patchouli:1.20.1-84-FORGE")
-    modImplementation("curse.maven:advancedae-1084104:6205290")
+    implementation("curse.maven:modern-ui-352491:6199942")
+    implementation("curse.maven:mekanism-268560:6258796")
+    implementation("curse.maven:applied-mekanistics-574300:4842281")
+    implementation("curse.maven:mekanism-generators-268566:6258799")
+    implementation("curse.maven:applied-flux-965012:6327987")
+    implementation("curse.maven:glodium-957920:5226922")
+    implementation("curse.maven:ars-energistique-905641:5504444")
+    implementation("curse.maven:ars-nouveau-401955:5894609")
+    implementation("software.bernie.geckolib:geckolib-neoforge-1.21.1:4.2.2")
+    implementation("top.theillusivec4.curios:curios-neoforge:7.1.0+1.21.1")
+    implementation("vazkii.patchouli:Patchouli:1.21.1-84-NEOFORGE")
+    implementation("curse.maven:advancedae-1084104:6205290")
 
-    modCompileOnly("vazkii.botania:Botania:1.20.1-448-FORGE:api")
-    modRuntimeOnly("vazkii.botania:Botania:1.20.1-448-FORGE")
-    modImplementation("curse.maven:applied-botanics-addon-610632:4904185")
+    compileOnly("vazkii.botania:Botania:1.21.1-448-NEOFORGE:api")
+    runtimeOnly("vazkii.botania:Botania:1.21.1-448-NEOFORGE")
+    implementation("curse.maven:applied-botanics-addon-610632:4904185")
 
-    modRuntimeOnly("com.gregtechceu.gtceu:gtceu-1.20.1:1.4.2")
-    modRuntimeOnly("curse.maven:sophisticated-core-618298:6226747")
-    modRuntimeOnly("curse.maven:sophisticated-storage-619320:6217888")
+    runtimeOnly("com.gregtechceu.gtceu:gtceu-1.21.1:1.4.2")
+    runtimeOnly("curse.maven:sophisticated-core-618298:6226747")
+    runtimeOnly("curse.maven:sophisticated-storage-619320:6217888")
 
     annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
-}
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-    config "${mod_id}.mixins.json"
-}
-
 jar {
     manifest.attributes([
-            "MixinConfigs": "${mod_id}.mixins.json",
             "Multi-Release": false
     ])
 }
@@ -304,8 +282,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            forge_version          : forge_version,
-            forge_version_range    : forge_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -323,7 +301,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 // this works with both building through Gradle and the IDE.
 sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
-legacyForge.ideSyncTask generateModMetadata
+neoForge.ideSyncTask generateModMetadata
 
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
@@ -344,7 +322,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = "21"
 }
 
 java {
